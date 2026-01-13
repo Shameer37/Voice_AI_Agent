@@ -35,7 +35,7 @@ voice-ai-agent/
 
 # Setup
 Clone the repository:
-git clone https://github.com/your-repository/voice-ai-agent.git
+git clone https://github.com/Shameer37/Voice-AI-Agent.git
 cd voice-ai-agent
 
 Install dependencies:
