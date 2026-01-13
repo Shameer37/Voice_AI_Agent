@@ -744,47 +744,51 @@ async def agent_ws(ws: WebSocket):
     #     asyncio.create_task(background_intelligence())
 
 
+    # background_task: Optional[asyncio.Task] = None
+    # async def process_turn():
+    #     nonlocal first_reply_filler_played, first_turn, skip_next_utterance
+    #     nonlocal background_task
+
+    #     audio = bytes(audio_buffer)
+    #     audio_buffer.clear()
+
+    #     max_bytes = int(MAX_TURN_SECONDS * INPUT_SR * 2)
+    #     if len(audio) > max_bytes:
+    #         audio = audio[-max_bytes:]
+
+    #     if len(audio) < int(INPUT_SR * 2 * 0.4):
+    #         return
+
+    #     if not stt.add_chunk(audio):
+    #         return
+
+    #     # Filler: delayed, once, no cancellation
+    #     if not first_reply_filler_played and _CACHED_FILLER:
+    #         first_reply_filler_played = True
+
+    #         async def delayed_filler():
+    #             await asyncio.sleep(0.3)
+    #             frame = int(TTS_SR * 2 * 0.16)
+    #             for i in range(0, len(_CACHED_FILLER), frame):
+    #                 await out_audio_q.put(_CACHED_FILLER[i:i + frame])
+
+    #         asyncio.create_task(delayed_filler())
+
+    #     if background_task and not background_task.done():
+    #         background_task.cancel()
+    #         try:
+    #             await background_task
+    #         except asyncio.CancelledError:
+    #             pass
+    #             background_task = asyncio.create_task(background_intelligence())
+
+    #         async def background_intelligence():
+    #             nonlocal skip_next_utterance, first_turn, tts_active
+
     background_task: Optional[asyncio.Task] = None
-    async def process_turn():
-        nonlocal first_reply_filler_played, first_turn, skip_next_utterance
-        nonlocal background_task
 
-        audio = bytes(audio_buffer)
-        audio_buffer.clear()
-
-        max_bytes = int(MAX_TURN_SECONDS * INPUT_SR * 2)
-        if len(audio) > max_bytes:
-            audio = audio[-max_bytes:]
-
-        if len(audio) < int(INPUT_SR * 2 * 0.4):
-            return
-
-        if not stt.add_chunk(audio):
-            return
-
-        # Filler: delayed, once, no cancellation
-        if not first_reply_filler_played and _CACHED_FILLER:
-            first_reply_filler_played = True
-
-            async def delayed_filler():
-                await asyncio.sleep(0.3)
-                frame = int(TTS_SR * 2 * 0.16)
-                for i in range(0, len(_CACHED_FILLER), frame):
-                    await out_audio_q.put(_CACHED_FILLER[i:i + frame])
-
-            asyncio.create_task(delayed_filler())
-
-        if background_task and not background_task.done():
-            background_task.cancel()
-            try:
-                await background_task
-            except asyncio.CancelledError:
-                pass
-                background_task = asyncio.create_task(background_intelligence())
-
-            async def background_intelligence():
-                nonlocal skip_next_utterance, first_turn, tts_active
-
+    async def background_intelligence():
+        nonlocal skip_next_utterance, first_turn, tts_active, call_active
 
         # -------------------------------
         # 1) Get final transcript
@@ -822,7 +826,6 @@ async def agent_ws(ws: WebSocket):
                     await asyncio.sleep(0.30)
                 tts_active = False
 
-            # await ws.close()
             call_active = False
             return
 
@@ -842,6 +845,47 @@ async def agent_ws(ws: WebSocket):
         async for pkt in _TTS.generate_frejun_audio_chunks(reply, chunk_ms=120):
             await out_audio_q.put(base64.b64decode(pkt["audio_b64"]))
         tts_active = False
+
+    async def process_turn():
+        nonlocal first_reply_filler_played, background_task
+
+        audio = bytes(audio_buffer)
+        audio_buffer.clear()
+
+        # limit turn size
+        max_bytes = int(MAX_TURN_SECONDS * INPUT_SR * 2)
+        if len(audio) > max_bytes:
+            audio = audio[-max_bytes:]
+
+        # drop super short turns
+        if len(audio) < int(INPUT_SR * 2 * 0.4):
+            return
+
+        if not stt.add_chunk(audio):
+            return
+
+        # Play filler ONCE, delayed
+        if not first_reply_filler_played and _CACHED_FILLER:
+            first_reply_filler_played = True
+
+            async def delayed_filler():
+                await asyncio.sleep(0.3)
+                frame = int(TTS_SR * 2 * 0.16)
+                for i in range(0, len(_CACHED_FILLER), frame):
+                    await out_audio_q.put(_CACHED_FILLER[i:i + frame])
+
+            asyncio.create_task(delayed_filler())
+
+        # Cancel previous background task (prevents overlap)
+        if background_task and not background_task.done():
+            background_task.cancel()
+            try:
+                await background_task
+            except asyncio.CancelledError:
+                pass
+
+        # ✅ Only background_intelligence does STT→LLM→TTS
+        background_task = asyncio.create_task(background_intelligence())
 
 
     # ---------------------------
