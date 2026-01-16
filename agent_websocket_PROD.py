@@ -776,7 +776,7 @@ async def agent_ws(ws: WebSocket):
 
     #     if background_task and not background_task.done():
     #         background_task.cancel()
-    #         try:
+    #         try: 
     #             await background_task
     #         except asyncio.CancelledError:
     #             pass
