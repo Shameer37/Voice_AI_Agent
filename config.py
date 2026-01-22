@@ -13,13 +13,6 @@ GREETING_MESSAGE = (
     "हम आपकी मदद करना चाहते हैं।"
 )
 
-#GREETING_PARTS = [
-#    "Namaste! Main Swara bol rahi hoon Swift Money se."
-#    "Kya aap bata sakte ho ki aapne humari services use karna kyun bandh kar diya?",
-#    "Hum aapki madad karna chahte hain."
-
-#]
-
 
 FAREWELL_MESSAGE = "Dhanyavaad! Aapka din shubh ho."
 
