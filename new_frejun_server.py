@@ -140,21 +140,54 @@ connector = StreamConnector(
 # GREETING
 # Routes
 # ────────────────────────────────────────────────
-@router.post("/calls/flow", status_code=status.HTTP_200_OK, include_in_schema=False)
+# @router.post("/calls/flow", status_code=status.HTTP_200_OK, include_in_schema=False)
+# async def stream_flow(payload: CallFlowRequest):
+#     logger.info(
+#         f"Call Flow for call_id={payload.call_id} from={payload.from_number} to={payload.to_number} "
+#         f"account_id={payload.account_id}"
+#     )
+#     stream_flow = {
+#         "action": "stream",
+#         "ws_url": f"wss://{settings.server_domain}/api/v1/calls/media-stream",
+#         "chunk_size": 1000,          # align with our aggregator (try 400 or 2000 if needed)
+#         "sample_rate": "16k", # Previously it was about 8khz 
+#         "record": True
+#     }
+#     logger.info(f"Stream flow response: {stream_flow}")
+#     return JSONResponse(stream_flow)
+@router.post("/calls/flow", status_code=200, include_in_schema=False)
 async def stream_flow(payload: CallFlowRequest):
+    """
+    Call flow entrypoint.
+
+    HARD RULE:
+    - Only OUTBOUND campaign calls are allowed
+    - ALL inbound calls are rejected immediately
+    """
+
+    direction = payload.data.get("direction") if hasattr(payload, "data") else None
+
+    # 🚨 HARD BLOCK INBOUND CALLS
+    if direction == "incoming":
+        logger.warning(
+            f"[SECURITY] Inbound call blocked | from={payload.from_number}"
+        )
+        return {
+            "action": "hangup"
+        }
+
+    # ✅ OUTBOUND ONLY
     logger.info(
-        f"Call Flow for call_id={payload.call_id} from={payload.from_number} to={payload.to_number} "
-        f"account_id={payload.account_id}"
+        f"[FLOW] Outbound call allowed | call_id={payload.call_id}"
     )
-    stream_flow = {
+
+    return {
         "action": "stream",
         "ws_url": f"wss://{settings.server_domain}/api/v1/calls/media-stream",
-        "chunk_size": 1000,          # align with our aggregator (try 400 or 2000 if needed)
-        "sample_rate": "16k", # Previously it was about 8khz 
+        "chunk_size": 1000,
+        "sample_rate": "16k",
         "record": True
     }
-    logger.info(f"Stream flow response: {stream_flow}")
-    return JSONResponse(stream_flow)
 
 
 @router.post("/initiate-call", status_code=status.HTTP_200_OK)
