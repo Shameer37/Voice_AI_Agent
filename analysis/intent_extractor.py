@@ -1,7 +1,7 @@
 # analysis/intent_extractor.py
 
 from openai import OpenAI
-from analysis.intent_schema import INTENT_CATEGORIES
+from analysis.intent_schema import INTENT_LABELS as INTENT_CATEGORIES
 from analysis.faq_context import FAQ_CONTEXT
 import os
 
