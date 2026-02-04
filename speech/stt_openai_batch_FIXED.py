@@ -114,10 +114,18 @@ def analyze_audio_energy(pcm_data: bytes, frame_size_ms: int = 20, sample_rate: 
     }
 
 def is_supported_language(text: str) -> bool:
-    # Hindi (Devanagari) OR English letters
+    # Previous behavior (kept for reference):
+    # # Hindi (Devanagari) OR English letters
+    # return bool(
+    #     re.search(r"[\u0900-\u097F]", text)  # Hindi
+    #     or re.search(r"[A-Za-z]", text)      # English
+    # )
+
+    # Allow Hindi (Devanagari), English, and Urdu/Arabic script
     return bool(
         re.search(r"[\u0900-\u097F]", text)  # Hindi
         or re.search(r"[A-Za-z]", text)      # English
+        or re.search(r"[\u0600-\u06FF]", text)  # Urdu/Arabic
     )
 
 def trim_silence(pcm_data: bytes, sample_rate: int = 16000, threshold: float = None) -> bytes:
@@ -417,14 +425,15 @@ class OpenAIBatchSTT:
         
         # Send to OpenAI
         try:
-            # result = await asyncio.to_thread(
-            #     self.client.audio.transcriptions.create,
-            #     model=self.model,
-            #     file=("speech.wav", wav_bytes),
-            #     language=self.language,
-            #     response_format="text",
-            # )
+            result = await asyncio.to_thread(
+                self.client.audio.transcriptions.create,
+                model=self.model,
+                file=("speech.wav", wav_bytes),
+                language=self.language,
+                response_format="text",
+            )
 
+            
             result = await asyncio.to_thread(
                 self.client.audio.transcriptions.create,
                 model=self.model,
@@ -436,6 +445,18 @@ class OpenAIBatchSTT:
                 ),
                 response_format="text",
             )
+
+            # result = await asyncio.to_thread(
+            #     self.client.audio.transcriptions.create,
+            #     model=self.model,
+            #     file=("speech.wav", wav_bytes),
+            #     language="hi",  # primary hint (keeps Hindi strong, allows Urdu)
+            #     prompt=(
+            #         "Transcribe in Hindi (Devanagari), Urdu (Arabic script), or English. "
+            #         "Do not hallucinate; if unclear, return the closest accurate text."
+            #     ),
+            #     response_format="text",
+            # )
             
             text = result.strip() if isinstance(result, str) else str(result).strip()
 
@@ -482,4 +503,3 @@ class OpenAIBatchSTT:
         self._buffer.clear()
         # Reset VAD state if needed in future
         logger.info("[STT] Clone instance reset (buffer cleared)")
-
