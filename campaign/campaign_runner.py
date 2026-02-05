@@ -39,6 +39,8 @@ EXPECTED EXTENSIONS
 """
 # campaign/campaign_runner.py
 import logging
+import asyncio
+import random
 from campaign.campaign_store import CampaignStore
 
 logger = logging.getLogger("campaign")
@@ -84,6 +86,14 @@ class CampaignRunner:
                     logger.warning(
                         f"⚠️ Merchant {merchant.id} failed: {call_result['result']}"
                     )
+
+                # Previous behavior (kept for reference):
+                # (No post-call cooldown)
+
+                # NEW: Random cooldown (20–30s) to let agent reset & provider settle
+                cooldown_seconds = random.randint(20, 30)
+                logger.info(f"⏳ Cooldown {cooldown_seconds}s before next call")
+                await asyncio.sleep(cooldown_seconds)
 
             except Exception as e:
                 logger.exception(f"❌ Merchant {merchant.id} crashed")
