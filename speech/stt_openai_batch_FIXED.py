@@ -113,20 +113,24 @@ def analyze_audio_energy(pcm_data: bytes, frame_size_ms: int = 20, sample_rate: 
         "frames_with_speech": frames_with_speech
     }
 
+# def is_supported_language(text: str) -> bool:
+#     #Previous behavior (kept for reference):
+#     # Hindi (Devanagari) OR English letters
+#     return bool(
+#         re.search(r"[\u0900-\u097F]", text)  # Hindi
+#         or re.search(r"[A-Za-z]", text)      # English
+#     )
 def is_supported_language(text: str) -> bool:
-    # Previous behavior (kept for reference):
-    # # Hindi (Devanagari) OR English letters
-    # return bool(
-    #     re.search(r"[\u0900-\u097F]", text)  # Hindi
-    #     or re.search(r"[A-Za-z]", text)      # English
-    # )
+    # Must contain Hindi OR English
+    if not re.search(r"[\u0900-\u097F]|[A-Za-z]", text):
+        return False
 
-    # Allow Hindi (Devanagari), English, and Urdu/Arabic script
-    return bool(
-        re.search(r"[\u0900-\u097F]", text)  # Hindi
-        or re.search(r"[A-Za-z]", text)      # English
-        or re.search(r"[\u0600-\u06FF]", text)  # Urdu/Arabic
-    )
+    # HARD reject Arabic / Urdu
+    if re.search(r"[\u0600-\u06FF]", text):
+        return False
+
+    return True
+
 
 def trim_silence(pcm_data: bytes, sample_rate: int = 16000, threshold: float = None) -> bytes:
     """Trim leading and trailing silence from audio."""
@@ -425,27 +429,16 @@ class OpenAIBatchSTT:
         
         # Send to OpenAI
         try:
-            result = await asyncio.to_thread(
-                self.client.audio.transcriptions.create,
-                model=self.model,
-                file=("speech.wav", wav_bytes),
-                language=self.language,
-                response_format="text",
-            )
+            # Previous behavior (kept for reference):
+            # result = await asyncio.to_thread(
+            #     self.client.audio.transcriptions.create,
+            #     model=self.model,
+            #     file=("speech.wav", wav_bytes),
+            #     language=self.language,
+            #     response_format="text",
+            # )
 
-            
-            result = await asyncio.to_thread(
-                self.client.audio.transcriptions.create,
-                model=self.model,
-                file=("speech.wav", wav_bytes),
-                language="hi",  # primary hint
-                prompt=(
-                    "Transcribe only in Hindi (Devanagari) or English. "
-                    "Do not use Urdu, Arabic, or any other script."
-                ),
-                response_format="text",
-            )
-
+            # RESTORED: allow Urdu/Arabic script in transcription
             # result = await asyncio.to_thread(
             #     self.client.audio.transcriptions.create,
             #     model=self.model,
@@ -457,8 +450,42 @@ class OpenAIBatchSTT:
             #     ),
             #     response_format="text",
             # )
-            
+            result = await asyncio.to_thread(
+                self.client.audio.transcriptions.create,
+                model=self.model,
+                file=("speech.wav", wav_bytes),
+                language="hi",
+                prompt=("""
+                    You are transcribing a real outbound phone call with an Indian fintech merchant related to AEPS, payments, settlements, devices, and portal issues.
+
+                    STRICT RULES:
+                    - Transcribe ONLY in Hindi (Devanagari script) or English (Latin script). 
+                    - DO NOT use Urdu, Arabic, or any other script.
+                    - If the speech is unclear, noisy, or incomplete, return an empty string. 
+                    - Do NOT guess, translate, paraphrase, or autocorrect.
+                    - Preserve the merchant’s words exactly as spoken.
+
+                    DOMAIN CONTEXT (for accuracy, not guessing):
+                    Common topics may include:
+                    - AEPS, Aadhaar Pay, withdrawals, settlements
+                    - Device issues (Mantra, Morpho, SecuGen, Precision)
+                    - Portal, app, login, KYC, biometric, transaction status
+                    - Pending, failed, awaiting, balance, commission, charges
+
+                    STYLE:
+                    - Short, spoken phrases only.
+                    - No punctuation unless clearly spoken.
+                    
+
+                    If you cannot confidently transcribe in Hindi or English, return an empty string."""
+                ),
+                response_format="text",
+            )
+                        
             text = result.strip() if isinstance(result, str) else str(result).strip()
+
+            # Previous change (kept for reference):
+            # (Urdu -> Hindi conversion block removed)
 
             if not is_supported_language(text):
                 logger.info(f"[STT] Rejected unsupported script: '{text}'")

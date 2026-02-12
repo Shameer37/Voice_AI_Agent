@@ -7,15 +7,18 @@ from fastapi.responses import JSONResponse
 from new_config import settings
 from pydantic import BaseModel
 from typing import Optional, Any
+# from agent.utils.time_utils import parse_utc_iso, format_ist
 
 from teler.streams import StreamConnector, StreamType, StreamOp
 from teler import AsyncClient
+## Previous import (kept for reference):
+# from agent.utils.email_utils import send_support_summary_email
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 from itertools import count
 _chunk_counter = count(1)
-
+CALL_CONTEXT = {} 
 
 # ────────────────────────────────────────────────
 # Models
@@ -54,17 +57,40 @@ async def call_stream_handler(message: str):
         logger.debug(f"[Teler->Bridge] raw message: {message[:200]}{'...' if len(message) > 200 else ''}")
         msg = json.loads(message)
 
-        # 1) Teler will always send a "start" first
+        # #1) Teler will always send a "start" first
+        # if msg.get("type") == "start":
+        #     data = msg.get("data", {}) or {}
+        #     logger.info(
+        #         f"[Teler->Bridge] start: encoding={data.get('encoding')} "
+        #         f"sr={data.get('sample_rate')} ch={data.get('channels')} "
+        #         f"stream_id={msg.get('stream_id')} message_id={msg.get('message_id')}"
+        #     )
+        #     return ({}, StreamOp.PASS)
         if msg.get("type") == "start":
-            data = msg.get("data", {}) or {}
-            logger.info(
-                f"[Teler->Bridge] start: encoding={data.get('encoding')} "
-                f"sr={data.get('sample_rate')} ch={data.get('channels')} "
-                f"stream_id={msg.get('stream_id')} message_id={msg.get('message_id')}"
-            )
-            return ({}, StreamOp.PASS)
+            stream_id = msg.get("stream_id")
 
-        # 2) Then repeated "audio" messages: data.audio_b64
+            logger.info(
+                f"[Teler->Bridge] start stream_id={stream_id} "
+                f"encoding={msg.get('data', {}).get('encoding')} "
+                f"sr={msg.get('data', {}).get('sample_rate')}"
+            )
+
+            # 🔑 Lookup call context populated via webhook
+            call_ctx = next(
+                (v for v in CALL_CONTEXT.values() if v.get("stream_id") == stream_id),
+                {}
+            )
+
+            meta_payload = {
+                "type": "meta",
+                "call_id": call_ctx.get("call_id"),
+                "to_number": call_ctx.get("to_number"),
+            }
+
+            logger.info(f"[Bridge->Agent] META injected: {meta_payload}")
+
+            return (json.dumps(meta_payload), StreamOp.RELAY)
+
         if msg.get("type") == "audio":
             data = msg.get("data") or {}
             audio_b64 = data.get("audio_b64")
@@ -227,13 +253,45 @@ async def initiate_call(call_request: CallRequest):
         )
 
 
-@router.post("/webhooks/receiver", status_code=status.HTTP_200_OK, include_in_schema=False)
-async def webhook_receiver(data: dict):
-    """
-    Log webhook payload from Teler.
-    """
-    logger.info(f"--------Webhook Payload-------- {data}")
-    return JSONResponse(content={"status": "received"})
+# @router.post("/webhooks/receiver", status_code=status.HTTP_200_OK, include_in_schema=False)
+# async def webhook_receiver(data: dict):
+#     """
+#     Log webhook payload from Teler.
+#     """
+#     logger.info(f"--------Webhook Payload-------- {data}")
+#     return JSONResponse(content={"status": "received"})
+@router.post("/webhooks/receiver", status_code=200, include_in_schema=False)
+async def webhook_receiver(payload: dict):
+    logger.info(f"--------Webhook Payload-------- {payload}")
+
+    event = payload.get("event")
+    data = payload.get("data", {}) or {}
+
+    call_id = data.get("call_id")
+    if not call_id:
+        return {"status": "ignored"}
+
+    ctx = CALL_CONTEXT.setdefault(call_id, {})
+
+    if event == "call.initiated":
+        ctx.update({
+            "call_id": call_id,
+            "from_number": data.get("from"),
+            "to_number": data.get("to"),
+            "start_time": data.get("startTime"),
+        })
+
+    elif event == "call.answered":
+        ctx["answer_time"] = data.get("answer_time")
+
+    elif event == "call.completed":
+        ctx["hangup_time"] = data.get("hangup_time")
+
+    elif event == "stream.initiated":
+        ctx["stream_id"] = data.get("stream_id")
+
+    return {"status": "ok"}
+
 
 
 @router.websocket("/calls/media-stream")
@@ -243,3 +301,29 @@ async def handle_media_stream(websocket: WebSocket):
     logger.info("Starting bridge_stream with StreamConnector…")
     await connector.bridge_stream(websocket)
     logger.info("WebSocket disconnected.")
+
+    # Previous behavior with email (kept for reference):
+    # start_ts = datetime.utcnow()
+    # try:
+    #     await connector.bridge_stream(websocket)
+    # finally:
+    #     end_ts = datetime.utcnow()
+    #     duration = int((end_ts - start_ts).total_seconds())
+    #
+    #     post_call_data = {
+    #         "merchant_id": None,
+    #         "merchant_name": None,
+    #         "merchant_phone": None,
+    #         "call_id": None,
+    #         "call_time": start_ts.isoformat(),
+    #         "duration": duration,
+    #         "agent_connected": True,
+    #         "call_result": "completed",
+    #         "intent": "unknown",
+    #         "summary": "Call completed via FreJun bridge (no transcript attached)."
+    #     }
+    #
+    #     # Send email after call ends
+    #     send_support_summary_email(post_call_data)
+    #
+    #     logger.info("WebSocket disconnected.")

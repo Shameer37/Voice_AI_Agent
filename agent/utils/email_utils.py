@@ -122,14 +122,16 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from dotenv import load_dotenv
 
-SMTP_HOST = os.getenv("SMTP_HOST", "localhost")
-SMTP_PORT = int(os.getenv("SMTP_PORT", 1025))
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASS = os.getenv("SMTP_PASS")
-SMTP_SENDER = os.getenv("SMTP_SENDER", "noreply@swiftmoney.ai")
-SUPPORT_TEAM_EMAIL = os.getenv("SUPPORT_TEAM_EMAIL")
-ENV = os.getenv("ENV", "dev")
+# Previous behavior (kept for reference):
+# SMTP_HOST = os.getenv("SMTP_HOST", "localhost")
+# SMTP_PORT = int(os.getenv("SMTP_PORT", 1025))
+# SMTP_USER = os.getenv("SMTP_USER")
+# SMTP_PASS = os.getenv("SMTP_PASS")
+# SMTP_SENDER = os.getenv("SMTP_SENDER", "noreply@swiftmoney.ai")
+# SUPPORT_TEAM_EMAIL = os.getenv("SUPPORT_TEAM_EMAIL")
+# ENV = os.getenv("ENV", "dev")
 
 
 def send_support_summary_email(post_call_data: dict):
@@ -137,6 +139,15 @@ def send_support_summary_email(post_call_data: dict):
     Sends a clean post-call summary to support team.
     This file does ZERO intelligence.
     """
+    load_dotenv()
+    # Load environment at call time (ensures .env is read before use)
+    SMTP_HOST = os.getenv("SMTP_HOST", "localhost")
+    SMTP_PORT = int(os.getenv("SMTP_PORT", 1025))
+    SMTP_USER = os.getenv("SMTP_USER")
+    SMTP_PASS = os.getenv("SMTP_PASS")
+    SMTP_SENDER = os.getenv("SMTP_SENDER", "noreply@swiftmoney.ai")
+    SUPPORT_TEAM_EMAIL = os.getenv("SUPPORT_TEAM_EMAIL")
+    ENV = os.getenv("ENV", "dev")
 
     subject = f"[AI Call Report] {post_call_data['intent']} | Merchant {post_call_data.get('merchant_id')}"
 
@@ -172,7 +183,25 @@ You may use the Call ID to retrieve recordings if required.
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
 
+    # Previous behavior (kept for reference):
+    # try:
+    #     if ENV == "dev":
+    #         with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+    #             server.send_message(msg)
+    #     else:
+    #         with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+    #             server.starttls()
+    #             server.login(SMTP_USER, SMTP_PASS)
+    #             server.send_message(msg)
+    #
+    #     print(f"[📧] Summary email sent to Support Team ({SUPPORT_TEAM_EMAIL})")
+    # except Exception as e:
+    #     print(f"[⚠️] Failed to send support email: {e}")
+
     try:
+        print(f"[EMAIL] ENV={ENV} SMTP_HOST={SMTP_HOST} SMTP_PORT={SMTP_PORT} "
+              f"SMTP_SENDER={SMTP_SENDER} SUPPORT_TEAM_EMAIL={SUPPORT_TEAM_EMAIL}")
+
         if ENV == "dev":
             with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
                 server.send_message(msg)
@@ -185,4 +214,4 @@ You may use the Call ID to retrieve recordings if required.
 
         print(f"[📧] Summary email sent to Support Team ({SUPPORT_TEAM_EMAIL})")
     except Exception as e:
-        print(f"[⚠️] Failed to send support email: {e}")
+        print(f"[⚠️] Failed to send support email: {e!r}")

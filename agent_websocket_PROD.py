@@ -11,17 +11,24 @@ import re
 import time
 import struct
 import math
+from agent.utils.time_utils import utc_now, parse_utc_iso, format_ist
 from typing import Optional, Any
 from fastapi import FastAPI, WebSocket
 from fastapi.websockets import WebSocketDisconnect
 from starlette.websockets import WebSocketState
 from contextlib import asynccontextmanager
+from zoneinfo import ZoneInfo
+from datetime import timezone
 
 from speech.stt_openai_batch_FIXED import OpenAIBatchSTT
 from speech.tts_8khz import TTS8k
 from agent.rag_engine import get_contextual_response, load_context_retriever
+from analysis.intent_extractor import extract_intent_and_summary
 from config import GREETING_MESSAGE, FAREWELL_MESSAGE, EXIT_KEYWORDS, FIRST_REPLY_FILLER
-
+from agent.utils.email_utils import send_support_summary_email
+from analysis.hinglish_normalizer import normalize_hinglish
+from dotenv import load_dotenv
+load_dotenv()
 # ----------------------------------------------------------------------------
 # Logging
 # ----------------------------------------------------------------------------
@@ -98,6 +105,8 @@ def clean_transcript(text: str) -> str:
 def is_exit_utterance(text: str) -> bool:
     return any(k in text.lower() for k in EXIT_KEYWORDS)
 
+
+
 # ----------------------------------------------------------------------------
 # Lifespan
 # ----------------------------------------------------------------------------
@@ -142,6 +151,11 @@ app.router.lifespan_context = lifespan
 async def agent_ws(ws: WebSocket):
     await ws.accept()
     logger.info("New call connected")
+    #call_start_ts = datetime.utcnow()
+    call_start_ts = utc_now()
+    call_id = None
+    to_number = None
+    transcript_lines = []
 
     # ---------------------------
     # Audio sender (ONLY writer)
@@ -268,10 +282,13 @@ async def agent_ws(ws: WebSocket):
         # 1) Get final transcript
         # -------------------------------
         text = clean_transcript(await stt.transcribe_buffer())
+        text = normalize_hinglish(text)                   #This line is added for that intent extractor can work better on hinglish inputs. It normalizes common hinglish words to a more standard form. If the output gets worse then we should  remove this line.
         if len(text) < MIN_UTTERANCE_CHARS:
             return
 
         logger.info(f"[USER] {text}")
+        # CHANGE: capture user text for post-call summary
+        transcript_lines.append(f"USER: {text}")
 
         # -------------------------------
         # 2) Greeting-only skip (first turn protection)
@@ -311,6 +328,8 @@ async def agent_ws(ws: WebSocket):
         )
 
         logger.info(f"[AGENT] {reply}")
+        # CHANGE: capture agent reply for post-call summary
+        transcript_lines.append(f"AGENT: {reply}")
 
         # -------------------------------
         # 5) Speak reply
@@ -370,6 +389,15 @@ async def agent_ws(ws: WebSocket):
         while call_active:
             msg = await ws.receive_text()
             data = json.loads(msg)
+            # Handle optional metadata message
+            if data.get("type") == "meta":
+                # Previous behavior (kept for reference):
+                # (No metadata handling)
+
+                call_id = data.get("call_id") or call_id
+                to_number = data.get("to_number") or to_number
+                logger.info(f"[META] call_id={call_id} to_number={to_number}")
+                continue
             if "user_audio_chunk" not in data:
                 continue
 
@@ -432,6 +460,52 @@ async def agent_ws(ws: WebSocket):
         except Exception:
             pass
 
+        # Previous behavior (kept for reference):
+        # logger.info("Call ended")
+
+        # NEW: send summary email after call ends
+        call_end_ts = utc_now()
+        duration = int((call_end_ts - call_start_ts).total_seconds())
+        # Previous behavior (kept for reference):
+        # post_call_data = {
+        #     "merchant_id": None,
+        #     "merchant_name": None,
+        #     "merchant_phone": to_number,
+        #     "call_id": call_id,
+        #     "call_time": call_start_ts.isoformat(),
+        #     "duration": duration,
+        #     "agent_connected": True,
+        #     "call_result": "completed",
+        #     "intent": "unknown",
+        #     "summary": "Call completed via agent websocket (no transcript attached)."
+        # }
+
+        # CHANGE: build short summary from transcript
+        transcript_text = "\n".join(transcript_lines).strip()
+        if transcript_text:
+            intent_data = await asyncio.to_thread(
+                extract_intent_and_summary, transcript_text
+            )
+            intent = intent_data.get("intent", "unknown")
+            summary = intent_data.get("summary", "Summary unavailable.")
+        else:
+            intent = "unknown"
+            summary = "No transcript captured."
+
+        post_call_data = {
+            "merchant_id": None,
+            "merchant_name": None,
+            "merchant_phone": to_number,
+            "call_id": call_id,
+            "call_time": format_ist(call_start_ts),
+            "duration": duration,
+            "agent_connected": True,
+            "call_result": "completed",
+            "intent": intent,
+            "summary": summary
+        }
+        send_support_summary_email(post_call_data)
+
         logger.info("Call ended")
 
 # ============================================================================
@@ -440,4 +514,3 @@ async def agent_ws(ws: WebSocket):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("agent_websocket_PROD:app", host="0.0.0.0", port=8001)
-

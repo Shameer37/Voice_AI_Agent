@@ -38,10 +38,14 @@ EXPECTED EXTENSIONS
 - Priority-based calling
 """
 # campaign/campaign_runner.py
+
 import logging
 import asyncio
 import random
 from campaign.campaign_store import CampaignStore
+from analysis.post_call_processor import build_post_call_payload
+from agent.utils.email_utils import send_support_summary_email
+from config import ENV
 
 logger = logging.getLogger("campaign")
 
@@ -69,28 +73,43 @@ class CampaignRunner:
             try:
                 logger.info(f"📞 Calling merchant {merchant.id}")
 
+                # 1️⃣ Place call
                 call_result = await self.call_controller.place_call(merchant)
+                call_result = call_result or {}
 
-                if call_result["status"] == "completed":
+                # 2️⃣ Build post-call payload (NO side effects)
+                post_call_payload = build_post_call_payload(
+                    merchant=merchant,
+                    call_result=call_result,
+                    transcript=call_result.get("transcript"),  # optional
+                )
+
+                # 3️⃣ Persist result
+                if call_result.get("status") == "completed":
                     self.store.mark_completed(
                         merchant_id=merchant.id,
-                        call_result=call_result
+                        call_result=post_call_payload,
                     )
                     logger.info(f"✅ Merchant {merchant.id} completed")
-
                 else:
                     self.store.mark_failed(
                         merchant_id=merchant.id,
-                        call_result=call_result
+                        call_result=post_call_payload,
                     )
                     logger.warning(
-                        f"⚠️ Merchant {merchant.id} failed: {call_result['result']}"
+                        f"⚠️ Merchant {merchant.id} failed: {call_result.get('result')}"
                     )
 
-                # Previous behavior (kept for reference):
-                # (No post-call cooldown)
+                # 4️⃣ Trigger email (PRODUCTION ONLY)
+                if ENV == "prod":
+                    try:
+                        send_support_summary_email(post_call_payload)
+                    except Exception:
+                        logger.exception(
+                            f"📧 Failed to send support email for merchant {merchant.id}"
+                        )
 
-                # NEW: Random cooldown (20–30s) to let agent reset & provider settle
+                # 5️⃣ Cooldown (provider safety)
                 cooldown_seconds = random.randint(20, 30)
                 logger.info(f"⏳ Cooldown {cooldown_seconds}s before next call")
                 await asyncio.sleep(cooldown_seconds)
@@ -105,5 +124,5 @@ class CampaignRunner:
                         "result": "internal_error",
                         "summary": str(e),
                         "agent_connected": False,
-                    }
+                    },
                 )
