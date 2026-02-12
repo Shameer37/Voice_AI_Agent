@@ -25,3 +25,5 @@ tty.py
 duplex_helper/
 build/
 user_memory_store/
+test.py
+time_test.py
