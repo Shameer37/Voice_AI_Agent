@@ -5,6 +5,8 @@ from analysis.intent_schema import INTENT_LABELS as INTENT_CATEGORIES
 from analysis.faq_context import FAQ_CONTEXT
 import os
 import json
+from dotenv import load_dotenv
+load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 

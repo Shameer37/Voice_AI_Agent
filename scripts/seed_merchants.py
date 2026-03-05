@@ -21,12 +21,12 @@ def seed():
         # ),
         Merchant(
             id=str(uuid.uuid4()),
-            name="Gaurav",
+            name="Shameer",
             phone="+91000000003"
         ),
         Merchant(
             id=str(uuid.uuid4()),
-            name="Raju",
+            name="Pratham",
             phone="+91000000009"
         ),
     ]

@@ -200,12 +200,6 @@ async def agent_ws(ws: WebSocket):
     TURN_COOLDOWN_SECONDS = 0.8
     call_active = True
 
-    # Semantic turn buffer (per call)
-    semantic_buffer = []
-    semantic_last_ts = time.time()
-    SEMANTIC_SILENCE = 0.6   # slightly longer than acoustic silence
-    MAX_SEMANTIC_LEN = 200
-
     # ---------------------------
     # Greeting (BLOCKING INPUT)
     # ---------------------------
@@ -282,7 +276,7 @@ async def agent_ws(ws: WebSocket):
     background_task: Optional[asyncio.Task] = None
 
     async def background_intelligence():
-        nonlocal skip_next_utterance, first_turn, tts_active, call_active, semantic_last_ts
+        nonlocal skip_next_utterance, first_turn, tts_active, call_active
 
         # -------------------------------
         # 1) Get final transcript
@@ -292,49 +286,15 @@ async def agent_ws(ws: WebSocket):
         if len(text) < MIN_UTTERANCE_CHARS:
             return
 
-        # -------------------------------
-        # 🧠 SEMANTIC CHUNKING START
-        # -------------------------------
-        now = time.time()
-
-        # semantic_pause must be measured before updating semantic_last_ts
-        semantic_pause = (now - semantic_last_ts) > SEMANTIC_SILENCE
-
-        semantic_buffer.append(text)
-        semantic_last_ts = now
-
-        # Join what user has said so far
-        merged_text = " ".join(semantic_buffer).strip()
-
-        # Stop conditions (VERY IMPORTANT)
-        SEMANTIC_STOP_WORDS = [
-            "haan", "haan ji", "bas", "itna hi",
-            "yehi problem", "ho gaya", "nahi aur"
-        ]
-
-        has_stop_word = any(w in merged_text.lower() for w in SEMANTIC_STOP_WORDS)
-        too_long = len(merged_text) >= MAX_SEMANTIC_LEN
-
-        # Decide whether meaning is complete
-        if not (has_stop_word or too_long or semantic_pause):
-            logger.info(f"[SEMANTIC BUFFERING] {merged_text}")
-            return
-
-        # FINAL semantic utterance
-        final_text = merged_text
-        semantic_buffer.clear()
-
-        logger.info(f"[SEMANTIC FINAL] {final_text}")
-
-        logger.info(f"[USER] {final_text}")
+        logger.info(f"[USER] {text}")
         # CHANGE: capture user text for post-call summary
-        transcript_lines.append(f"USER: {final_text}")
+        transcript_lines.append(f"USER: {text}")
 
         # -------------------------------
         # 2) Greeting-only skip (first turn protection)
         # -------------------------------
         if skip_next_utterance and any(
-            w in final_text.lower() for w in ["hello", "hi", "hey", "à¤¹à¥‡à¤²à¥‹", "à¤¹à¤²à¥‹", "à¤¨à¤®à¤¸à¥à¤¤à¥‡"]
+            w in text.lower() for w in ["hello", "hi", "hey", "हेलो", "हलो", "नमस्ते"]
         ):
             logger.info("[STT] Greeting-only utterance skipped")
             skip_next_utterance = False
@@ -346,7 +306,7 @@ async def agent_ws(ws: WebSocket):
         # -------------------------------
         # 3) EXIT INTENT (HIGHEST PRIORITY)
         # -------------------------------
-        if is_exit_utterance(final_text):
+        if is_exit_utterance(text):
             logger.info("[CALL] Exit intent detected")
 
             if _CACHED_FAREWELL:
@@ -364,7 +324,7 @@ async def agent_ws(ws: WebSocket):
         # 4) NORMAL RAG + LLM FLOW
         # -------------------------------
         reply = await asyncio.to_thread(
-            get_contextual_response, final_text, _RETRIEVER, "session"
+            get_contextual_response, text, _RETRIEVER, "session"
         )
 
         logger.info(f"[AGENT] {reply}")
@@ -417,7 +377,7 @@ async def agent_ws(ws: WebSocket):
             except asyncio.CancelledError:
                 pass 
 
-        # âœ… Only background_intelligence does STTâ†’LLMâ†’TTS
+        # ✅ Only background_intelligence does STT→LLM→TTS
         background_task = asyncio.create_task(background_intelligence())
 
 
@@ -442,7 +402,7 @@ async def agent_ws(ws: WebSocket):
                 continue
 
             if tts_active:
-                continue  # HARD GATE â€” REQUIRED
+                continue  # HARD GATE — REQUIRED
 
             chunk = base64.b64decode(data["user_audio_chunk"])
             rms = calculate_rms(chunk)
@@ -549,10 +509,8 @@ async def agent_ws(ws: WebSocket):
         logger.info("Call ended")
 
 # ============================================================================
-# Main 
+# Main
 # ============================================================================
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("agent_websocket_PROD:app", host="0.0.0.0", port=8001)
-
-

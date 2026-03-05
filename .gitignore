@@ -27,3 +27,11 @@ build/
 user_memory_store/
 test.py
 time_test.py
+test_imports.py
+test_rag_engine.py
+scripts/build_bm25.py
+agent/semnatic_chunker.py
+agent/hybrid_retriever.py
+campaign.db
+campaign/db.py
+analysis/intent_extractor.py

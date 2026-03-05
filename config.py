@@ -29,3 +29,6 @@ GREETING_KEYWORDS = [
 
 
 FIRST_REPLY_FILLER = "जी सर, एक मिनट दीजिए… मैं चेक कर रही हूँ।"
+
+
+ENV = "prod"

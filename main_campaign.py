@@ -1,65 +1,65 @@
-"""
-main_campaign.py
-================
-
-PURPOSE
--------
-Entry point for running outbound calling campaigns.
-
-WHY THIS FILE EXISTS
---------------------
-Separates campaign execution from the voice agent service.
-Allows campaigns to be run as:
-- CLI job
-- Cron task
-- Background worker
-
-WHAT THIS FILE DOES
--------------------
-- Initializes campaign components
-- Loads merchant data
-- Starts campaign execution
-
-WHAT THIS FILE MUST NOT DO
---------------------------
-- ❌ Must not contain business logic
-- ❌ Must not modify agent behavior
-- ❌ Must not handle telephony
-
-DESIGN PRINCIPLE
-----------------
-Bootstrap only. No intelligence here.
-
-EXPECTED EXTENSIONS
--------------------
-- Command-line arguments
-- Environment-based configs
-"""
-
+# """
 # main_campaign.py
+# ================
 
-import asyncio
-from campaign.excel_campaign_store import ExcelCampaignStore
-from campaign.campaign_runner import CampaignRunner
-from calls.call_controller import CallController
+# PURPOSE
+# -------
+# Entry point for running outbound calling campaigns.
 
-async def main():
-    store = ExcelCampaignStore(
-        path="merchants.xlsx",
-        max_attempts=3   # ✅ retry policy belongs to STORE
-    )
+# WHY THIS FILE EXISTS
+# --------------------
+# Separates campaign execution from the voice agent service.
+# Allows campaigns to be run as:
+# - CLI job
+# - Cron task
+# - Background worker
 
-    call_controller = CallController()
+# WHAT THIS FILE DOES
+# -------------------
+# - Initializes campaign components
+# - Loads merchant data
+# - Starts campaign execution
 
-    runner = CampaignRunner(
-        store=store,
-        call_controller=call_controller
-    )
+# WHAT THIS FILE MUST NOT DO
+# --------------------------
+# - ❌ Must not contain business logic
+# - ❌ Must not modify agent behavior
+# - ❌ Must not handle telephony
 
-    await runner.run()
+# DESIGN PRINCIPLE
+# ----------------
+# Bootstrap only. No intelligence here.
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# EXPECTED EXTENSIONS
+# -------------------
+# - Command-line arguments
+# - Environment-based configs
+# """
+
+# # main_campaign.py
+
+# import asyncio
+# from campaign.excel_campaign_store import ExcelCampaignStore
+# from campaign.campaign_runner import CampaignRunner
+# from calls.call_controller import CallController
+
+# async def main():
+#     store = ExcelCampaignStore(
+#         path="merchants.xlsx",
+#         max_attempts=3   # ✅ retry policy belongs to STORE
+#     )
+
+#     call_controller = CallController()
+
+#     runner = CampaignRunner(
+#         store=store,
+#         call_controller=call_controller
+#     )
+
+#     await runner.run()
+
+# if __name__ == "__main__":
+#     asyncio.run(main())
 
 
 
@@ -89,3 +89,27 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     asyncio.run(main())
+
+
+import asyncio
+from campaign.db import SessionLocal, init_db
+from campaign.db_campaign_store import DBCampaignStore
+from campaign.campaign_runner import CampaignRunner
+from calls.call_controller import CallController
+
+async def main():
+    init_db()
+    session = SessionLocal()
+
+    store = DBCampaignStore(session)
+    call_controller = CallController()
+
+    runner = CampaignRunner(
+        store=store,
+        call_controller=call_controller
+    )
+
+    await runner.run()
+
+if __name__ == "__main__":
+    asyncio.run(main())
