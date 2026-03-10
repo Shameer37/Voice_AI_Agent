@@ -13,6 +13,7 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain.prompts import PromptTemplate
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.schema import Document
+from openai import RateLimitError
 
 # ─────────────────────────────────────────────
 # ENV + LOGGER
@@ -35,6 +36,10 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 FALLBACK_UNKNOWN = (
     "हमने आपके दुविधा को नोट कर लिया है और आपकी चिंता को टीम तक पहुंचा दिया है "
     "तथा शीघ्र ही आपको जवाब देंगे!"
+)
+
+TECHNICAL_ERROR_MESSAGE = (
+    "माफ़ कीजिए, अभी एक तकनीकी समस्या आ गई है। कृपया थोड़ी देर बाद फिर से कोशिश करें।"
 )
 
 # ─────────────────────────────────────────────
@@ -293,102 +298,131 @@ def _init_llm() -> ChatOpenAI:
 #     return answer
 
 def get_contextual_response(user_query: str, retriever, user_id: str) -> str:
-    llm = _init_llm()
-    memory = get_user_memory(user_id)
-
-    user_query = (user_query or "").strip()
-    if not user_query:
-        return FALLBACK_UNKNOWN
-
-    q_lower = user_query.lower()
-
-    # ─────────────────────────────────────
-    # 0️⃣ HARD STOP — user has no details
-    # ─────────────────────────────────────
-    NO_DETAIL_TRIGGERS = [
-        "nahi", "nahi pata", "pata nahi",
-        "yaad nahi", "maloom nahi", "no"
-    ]
-
-    if any(t == q_lower or t in q_lower for t in NO_DETAIL_TRIGGERS):
-        return FALLBACK_UNKNOWN
-
-    # ─────────────────────────────────────
-    # 1️⃣ HARD STOP — confirmation / acceptance
-    # ─────────────────────────────────────
-    CONFIRM_TRIGGERS = [
-        "haan", "haan ji", "theek hai",
-        "ok", "okay", "samajh gaya",
-        "samajh gaye"
-    ]
-
-    if any(t == q_lower or t in q_lower for t in CONFIRM_TRIGGERS):
-        return ""  # SILENCE — agent must stop talking
-
-    # ─────────────────────────────────────
-    # 2️⃣ HARD STOP — call ending
-    # ─────────────────────────────────────
-    EXIT_TRIGGERS = ["bye", "by", "dhanyavad", "thank you", "thanks"]
-
-    if any(t in q_lower for t in EXIT_TRIGGERS):
-        return "धन्यवाद सर, आगे कोई मदद चाहिए हो तो बता दीजिएगा।"
-
-    # ─────────────────────────────────────
-    # 3️⃣ Retrieve KB context (MANDATORY)
-    # ─────────────────────────────────────
     try:
-        docs = retriever.invoke(user_query)
+        llm = _init_llm()
+        memory = get_user_memory(user_id)
+
+        user_query = (user_query or "").strip()
+        if not user_query:
+            return FALLBACK_UNKNOWN
+
+        q_lower = user_query.lower()
+
+        # ─────────────────────────────────────
+        # 0️⃣ HARD STOP — user has no details
+        # ─────────────────────────────────────
+        NO_DETAIL_TRIGGERS = [
+            "nahi", "nahi pata", "pata nahi",
+            "yaad nahi", "maloom nahi", "no"
+        ]
+
+        if any(t == q_lower or t in q_lower for t in NO_DETAIL_TRIGGERS):
+            return FALLBACK_UNKNOWN
+
+        # ─────────────────────────────────────
+        # 1️⃣ HARD STOP — confirmation / acceptance
+        # ─────────────────────────────────────
+        CONFIRM_TRIGGERS = [
+            "haan", "haan ji", "theek hai",
+            "ok", "okay", "samajh gaya",
+            "samajh gaye"
+        ]
+
+        if any(t == q_lower or t in q_lower for t in CONFIRM_TRIGGERS):
+            return ""  # SILENCE — agent must stop talking
+
+        # ─────────────────────────────────────
+        # 2️⃣ HARD STOP — call ending
+        # ─────────────────────────────────────
+        EXIT_TRIGGERS = ["bye", "by", "dhanyavad", "thank you", "thanks"]
+
+        if any(t in q_lower for t in EXIT_TRIGGERS):
+            return "धन्यवाद सर, आगे कोई मदद चाहिए हो तो बता दीजिएगा।"
+
+        # ─────────────────────────────────────
+        # 3️⃣ Retrieve KB context (MANDATORY)
+        # ─────────────────────────────────────
+        # try:
+        #     docs = retriever.invoke(user_query)
+        # except Exception:
+        #     logger.exception("[RAG] Retriever failed")
+        #     return FALLBACK_UNKNOWN
+        try:
+            docs = retriever.invoke(user_query)
+
+        except RateLimitError:
+            logger.exception("[RAG] OpenAI quota exceeded")
+            return TECHNICAL_ERROR_MESSAGE
+
+        except Exception:
+            logger.exception("[RAG] Retriever failed")
+            return FALLBACK_UNKNOWN
+
+
+        if not docs:
+            return FALLBACK_UNKNOWN
+
+        # ─────────────────────────────────────
+        # 4️⃣ ONE-TIME clarification ONLY for money ambiguity
+        # ─────────────────────────────────────
+        if user_id not in clarified_once:
+            clarified_once[user_id] = False
+
+        MONEY_TRIGGERS = ["paise", "fas", "pending", "atka", "stuck"]
+        SERVICE_KEYS = ["aeps", "dmt", "bbps", "withdrawal", "settlement"]
+
+        is_money_issue = any(k in q_lower for k in MONEY_TRIGGERS)
+        has_service = any(s in q_lower for s in SERVICE_KEYS)
+
+        if is_money_issue and not has_service and not clarified_once[user_id]:
+            clarified_once[user_id] = True
+            return "ये किस service में हुआ था — AEPS, DMT या कोई और?"
+
+        # ─────────────────────────────────────
+        # 5️⃣ Grounded LLM call (NO retriever inside)
+        # ─────────────────────────────────────
+        # doc_chain = create_stuff_documents_chain(
+        #     llm=llm,
+        #     prompt=qa_prompt
+        # )
+
+        # try:
+        #     answer = doc_chain.invoke({
+        #         "context": docs,
+        #         "history": memory.load_memory_variables({}).get("history", []),
+        #         "question": user_query,
+        #     })
+        # except Exception:
+        #     logger.exception("[RAG] LLM failed")
+        #     return FALLBACK_UNKNOWN
+        try:
+            answer = doc_chain.invoke({
+                "context": docs,
+                "history": memory.load_memory_variables({}).get("history", []),
+                "question": user_query,
+            })
+
+        except RateLimitError:
+            logger.exception("[RAG] OpenAI quota exceeded during LLM call")
+            return TECHNICAL_ERROR_MESSAGE
+
+        except Exception:
+            logger.exception("[RAG] LLM failed")
+            return FALLBACK_UNKNOWN
+
+        answer = (answer or "").strip()
+
+        # ─────────────────────────────────────
+        # 6️⃣ FINAL SAFETY GUARDS
+        # ─────────────────────────────────────
+        if not answer or len(answer) < 2:
+            return FALLBACK_UNKNOWN
+
+        # Block repeated or unnecessary questions
+        if "?" in answer and clarified_once.get(user_id, False):
+            return FALLBACK_UNKNOWN
+
+        return answer
     except Exception:
-        logger.exception("[RAG] Retriever failed")
-        return FALLBACK_UNKNOWN
-
-    if not docs:
-        return FALLBACK_UNKNOWN
-
-    # ─────────────────────────────────────
-    # 4️⃣ ONE-TIME clarification ONLY for money ambiguity
-    # ─────────────────────────────────────
-    if user_id not in clarified_once:
-        clarified_once[user_id] = False
-
-    MONEY_TRIGGERS = ["paise", "fas", "pending", "atka", "stuck"]
-    SERVICE_KEYS = ["aeps", "dmt", "bbps", "withdrawal", "settlement"]
-
-    is_money_issue = any(k in q_lower for k in MONEY_TRIGGERS)
-    has_service = any(s in q_lower for s in SERVICE_KEYS)
-
-    if is_money_issue and not has_service and not clarified_once[user_id]:
-        clarified_once[user_id] = True
-        return "ये किस service में हुआ था — AEPS, DMT या कोई और?"
-
-    # ─────────────────────────────────────
-    # 5️⃣ Grounded LLM call (NO retriever inside)
-    # ─────────────────────────────────────
-    doc_chain = create_stuff_documents_chain(
-        llm=llm,
-        prompt=qa_prompt
-    )
-
-    try:
-        answer = doc_chain.invoke({
-            "context": docs,
-            "history": memory.load_memory_variables({}).get("history", []),
-            "question": user_query,
-        })
-    except Exception:
-        logger.exception("[RAG] LLM failed")
-        return FALLBACK_UNKNOWN
-
-    answer = (answer or "").strip()
-
-    # ─────────────────────────────────────
-    # 6️⃣ FINAL SAFETY GUARDS
-    # ─────────────────────────────────────
-    if not answer or len(answer) < 2:
-        return FALLBACK_UNKNOWN
-
-    # Block repeated or unnecessary questions
-    if "?" in answer and clarified_once.get(user_id, False):
-        return FALLBACK_UNKNOWN
-
-    return answer
+        logger.exception("[RAG] Unexpected technical error")
+        return TECHNICAL_ERROR_MESSAGE
