@@ -32,3 +32,34 @@ FIRST_REPLY_FILLER = "जी सर, एक मिनट दीजिए… म�
 
 
 ENV = "prod"
+
+# # config.py
+# # ============================================================================
+# # PRODUCTION CONFIG — HUMANIZED VOICE AGENT
+# # ============================================================================
+ 
+# GREETING_MESSAGE = (
+#     "नमस्ते! मैं स्वरा बोल रही हूं स्विफ्ट मनी से। "
+#     "क्या आप बता सकते हो कि आपने हमारी सेवाओं का उपयोग क्यों बंद कर दिया है? "
+#     "हम आपकी मदद करना चाहते हैं।"
+# )
+ 
+# FAREWELL_MESSAGE = "Dhanyavaad! Aapka din shubh ho."
+ 
+# EXIT_KEYWORDS = [
+#     "bye", "thank you", "thanks", "exit", "stop", "shukriya", "dhanyawad",
+#     "बाई", "थैंक यू", "थैंक्स", "एक्जिट",
+#     "शुक्रिया", "धन्यवाद", "अलविदा"
+# ]
+ 
+# GREETING_KEYWORDS = [
+#     "hello", "hi", "hey", "namaste", "namaskar",
+#     "halo", "helo", "हैलो", "हेलो", "नमस्ते", "नमस्कार"
+# ]
+ 
+# # FIX: FIRST_REPLY_FILLER is no longer used directly —
+# # multiple filler variants are now defined in agent_websocket_PROD.py
+# # and pre-cached at startup. Keeping this for backward compatibility.
+# FIRST_REPLY_FILLER = "जी सर, एक क्षण दीजिए..."
+ 
+# ENV = "prod"

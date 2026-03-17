@@ -282,7 +282,7 @@ async def agent_ws(ws: WebSocket):
         # 1) Get final transcript
         # -------------------------------
         text = clean_transcript(await stt.transcribe_buffer())
-        text = normalize_hinglish(text)                   #This line is added for that intent extractor can work better on hinglish inputs. It normalizes common hinglish words to a more standard form. If the output gets worse then we should  remove this line.
+        text = normalize_hinglish(text)                    #This line is added for that intent extractor can work better on hinglish inputs. It normalizes common hinglish words to a more standard form. If the output gets worse then we should  remove this line.
         if len(text) < MIN_UTTERANCE_CHARS:
             return
 
@@ -362,7 +362,7 @@ async def agent_ws(ws: WebSocket):
             first_reply_filler_played = True
 
             async def delayed_filler():
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.3)    
                 frame = int(TTS_SR * 2 * 0.16)
                 for i in range(0, len(_CACHED_FILLER), frame):
                     await out_audio_q.put(_CACHED_FILLER[i:i + frame])
@@ -402,7 +402,7 @@ async def agent_ws(ws: WebSocket):
                 continue
 
             if tts_active:
-                continue  # HARD GATE — REQUIRED
+                continue  # HARD GATE — REQUIRED                                                                  
 
             chunk = base64.b64decode(data["user_audio_chunk"])
             rms = calculate_rms(chunk)

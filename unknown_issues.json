@@ -1,0 +1,458 @@
+[
+  {
+    "id": "815baacd-7fdc-4271-bba7-6a9e903698fe",
+    "session_id": "test-session",
+    "timestamp": "2026-03-13T10:43:01.885447+00:00",
+    "original_query": "mere pasie fas gaye hai",
+    "clarifications": [
+      {
+        "question": "Haan ji, yeh thoda mushkil hai, main samajhti hoon. Kya aap bata sakte hain yeh kab se ho raha hai?",
+        "answer": "3 din se"
+      },
+      {
+        "question": "Haan ji, yeh issue mujhe note karna hoga. Kya aap bata sakte hain aap kis device par transaction kar rahe hain?",
+        "answer": "AEPS"
+      },
+      {
+        "question": "Haan ji, yeh thoda mushkil hai, main samajhti hoon. Kya aap mujhe bata sakte hain transaction karte waqt kya error aa raha hai?",
+        "answer": "internal server error"
+      }
+    ],
+    "full_summary": "The merchant is experiencing an \"internal server error\" while attempting transactions on an AEPS device, which has been occurring for the past three days. The issue was noted during a support call, where the merchant expressed difficulty in processing transactions.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "ebe49a55-0320-4102-9be2-1ff8503111f8",
+    "session_id": "test-session",
+    "timestamp": "2026-03-13T10:58:44.585874+00:00",
+    "original_query": "mere paise fas gaye hai",
+    "clarifications": [
+      {
+        "question": "Yeh kab se ho raha hai?",
+        "answer": "3 din se"
+      },
+      {
+        "question": "Transaction karte waqt kya error message aa raha hai?",
+        "answer": "nahi"
+      },
+      {
+        "question": "Transaction karte waqt kya error message aa raha hai?",
+        "answer": "nahi"
+      }
+    ],
+    "full_summary": "The merchant is experiencing an issue where funds are stuck, which has been occurring for the past three days. During the call, it was confirmed that there are no error messages displayed during transactions. Further investigation may be needed to resolve the issue.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "a6e27a6c-a18a-4784-b52b-1f27491bc0b3",
+    "session_id": "test-session",
+    "timestamp": "2026-03-13T11:13:14.308956+00:00",
+    "original_query": "mere paise fas gaye hai",
+    "clarifications": [
+      {
+        "question": "Yeh kab se ho raha hai?",
+        "answer": "3 din se"
+      },
+      {
+        "question": "Aapka device ka model kya hai — Mantra, Morpho ya kuch aur?",
+        "answer": "Mantra"
+      }
+    ],
+    "full_summary": "The merchant is experiencing an issue where their funds are stuck, which has been occurring for the past three days. They are using a Mantra device to process transactions. Further investigation may be needed to resolve the issue and release the funds.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "5adbe912-9832-400f-bbac-e852a62941f9",
+    "session_id": "test-session",
+    "timestamp": "2026-03-13T11:17:48.610873+00:00",
+    "original_query": "mere paise fas gaye hai",
+    "clarifications": [
+      {
+        "question": "Aapka device ka model kya hai — Mantra, Morpho ya kuch aur?",
+        "answer": "Matra"
+      }
+    ],
+    "full_summary": "The merchant reported that their funds are stuck (\"mere paise fas gaye hai\") while using a Mantra device. Further details were gathered during the call, confirming that the issue is related to the specific device model, but no additional error messages were provided.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "9a5ac2e0-3334-4601-b9eb-f6c800379267",
+    "session_id": "test-session",
+    "timestamp": "2026-03-13T11:18:12.085816+00:00",
+    "original_query": "fund transfer",
+    "clarifications": [
+      {
+        "question": "Aapka transaction kis bank account mein transfer ho raha hai?",
+        "answer": "idbi"
+      }
+    ],
+    "full_summary": "The merchant is experiencing an issue with fund transfers to their IDBI bank account. The problem was identified during a call, but no specific error messages or additional details about when the issue started were provided. Further investigation may be needed to resolve the transfer problem.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "aa83afd4-0a5b-4ddc-be4b-e13a8be4cbc3",
+    "session_id": "test-session",
+    "timestamp": "2026-03-13T11:23:51.787405+00:00",
+    "original_query": "mere paise fas gaye hai",
+    "clarifications": [
+      {
+        "question": "Aapka paise kab se fas gaya hai aur kitna amount hai?",
+        "answer": "2 din se , 10000"
+      },
+      {
+        "question": "Aapne kis service ke liye payment kiya tha?",
+        "answer": "AEPS"
+      },
+      {
+        "question": "Q: Kya aapko koi error message mila tha jab aapne payment kiya tha?",
+        "answer": "nahi"
+      }
+    ],
+    "full_summary": "The merchant is experiencing an issue where ₹10,000 has been stuck for the past two days after making a payment for AEPS services. They did not receive any error messages during the transaction. Further investigation is needed to resolve the payment hold.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "68ecee04-ff06-463f-bc0f-e318aa176ffd",
+    "session_id": "test-session",
+    "timestamp": "2026-03-13T11:27:46.524397+00:00",
+    "original_query": "mere paise fas gaye hai",
+    "clarifications": [
+      {
+        "question": "Yeh kab se ho raha hai?",
+        "answer": "3 din se"
+      },
+      {
+        "question": "Kitna amount tha?",
+        "answer": "10000"
+      },
+      {
+        "question": "Kaunsa service tha?",
+        "answer": "Aeps"
+      }
+    ],
+    "full_summary": "The merchant is experiencing an issue where ₹10,000 has been stuck for the past three days related to the AEPS service. They reported that the problem began three days ago, but no specific error messages were provided during the call.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "cb60eb82-f4de-47bf-ad15-b7f0b874a95a",
+    "session_id": "test-session",
+    "timestamp": "2026-03-16T07:21:28.410971+00:00",
+    "original_query": "mere paise fas gaye hai",
+    "clarifications": [
+      {
+        "question": "Yeh kab se ho raha hai?",
+        "answer": "do din se"
+      },
+      {
+        "question": "Kitna amount tha?",
+        "answer": "10000"
+      },
+      {
+        "question": "Kaunsa service tha?",
+        "answer": "AEPS"
+      }
+    ],
+    "full_summary": "Merchant reported that ₹10,000 has been stuck for the past two days while using the AEPS service. The issue has persisted since it first occurred, and no specific error messages were mentioned during the call.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "6583e2af-3868-40da-a61f-e6d036bd3dfa",
+    "session_id": "test-session",
+    "timestamp": "2026-03-16T07:35:23.934584+00:00",
+    "original_query": "mere pasie fas gaye hai",
+    "clarifications": [
+      {
+        "question": "Aapne kis bank account se payment kiya tha?",
+        "answer": "idbi"
+      },
+      {
+        "question": "Aapka transaction kis amount ka tha?",
+        "answer": "1000"
+      },
+      {
+        "question": "Aapne kis service ke liye ₹1000 ka payment kiya tha?",
+        "answer": "AEPS"
+      }
+    ],
+    "full_summary": "The merchant reported an issue with a payment made for AEPS services, stating that they have not received the funds. The payment of ₹1000 was made through an IDBI bank account. Further details were gathered during the call, confirming the transaction amount and the service in question.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "463d030b-2197-4c1d-8dbf-39865c10ab86",
+    "session_id": "test-session",
+    "timestamp": "2026-03-16T12:20:30.048080+00:00",
+    "original_query": "mere paise fas gaye hai",
+    "clarifications": [
+      {
+        "question": "Aapne kis transaction ke liye paise fasne ki baat ki hai?",
+        "answer": "AEPS"
+      },
+      {
+        "question": "Aapka AEPS transaction kis bank ke through kiya gaya tha?",
+        "answer": "IDBI"
+      },
+      {
+        "question": "Aapka AEPS transaction kis amount ka tha?",
+        "answer": "1000"
+      }
+    ],
+    "full_summary": "The merchant reported that their funds of 1000 INR are stuck due to an AEPS transaction processed through IDBI bank. The issue was identified during a call, and no specific error messages were mentioned. Further investigation is needed to resolve the transaction issue.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "7426d4c7-ab7f-4e01-bbd7-5c302d26fc42",
+    "session_id": "test-session",
+    "timestamp": "2026-03-16T12:21:19.597778+00:00",
+    "original_query": "id inactive hogayi hai",
+    "clarifications": [
+      {
+        "question": "Aapka ID inactive hone ka reason kya lagta hai?",
+        "answer": "nahi patha"
+      },
+      {
+        "question": "Aapne last time kab apni ID use ki thi?",
+        "answer": "3 mahine pahale"
+      },
+      {
+        "question": "Aapki ID ko inactive hone se pehle kya koi notification ya message mila tha?",
+        "answer": "nahi"
+      }
+    ],
+    "full_summary": "The merchant's account ID has become inactive, with the last usage occurring three months ago. They reported not receiving any notifications or messages regarding the inactivity. The merchant is unsure of the reason for the ID's status change.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "fc7a57f9-2c49-4e39-84c9-d131b6910e16",
+    "session_id": "test-session",
+    "timestamp": "2026-03-16T12:22:01.249341+00:00",
+    "original_query": "id inactive hogayi hai kya kare",
+    "clarifications": [
+      {
+        "question": "Aapki ID inactive hone ka koi specific reason hai jo aapko pata hai?",
+        "answer": "nahi pata"
+      },
+      {
+        "question": "Aapne apni ID ko inactive hone se pehle koi transaction kiya tha?",
+        "answer": "nahi"
+      },
+      {
+        "question": "Aapki ID ko inactive hone se pehle kya koi notification ya message mila tha?",
+        "answer": "nahi"
+      }
+    ],
+    "full_summary": "The merchant's account has become inactive, and they are unsure of the reason behind it. They did not perform any transactions prior to the inactivity and did not receive any notifications or messages regarding the issue. Further investigation is needed to determine the cause of the account's inactivity.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "7413f008-b699-4592-bcb0-4838917bf188",
+    "session_id": "test-session",
+    "timestamp": "2026-03-16T12:23:02.796175+00:00",
+    "original_query": "swift money id activate karwani hai",
+    "clarifications": [
+      {
+        "question": "Aapki Swift Money ID activate karne mein koi specific error ya issue aa raha hai?",
+        "answer": "nahi"
+      },
+      {
+        "question": "Aapki Swift Money ID activate karne ke liye aapne KYC ki hai?",
+        "answer": "nahi kyc ke liye kya kya chahiye"
+      },
+      {
+        "question": "KYC ke liye aapke paas Aadhaar card aur PAN card hai?",
+        "answer": "haan"
+      }
+    ],
+    "full_summary": "The merchant is requesting assistance to activate their Swift Money ID but has not completed the necessary KYC process. During the call, it was confirmed that there are no specific errors preventing activation, and the merchant has both an Aadhaar card and PAN card available for KYC verification.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "db164013-2bff-4970-9393-4133c06b54f7",
+    "session_id": "test-session",
+    "timestamp": "2026-03-16T12:31:27.841632+00:00",
+    "original_query": "id inactive hogayi hai kya kare",
+    "clarifications": [
+      {
+        "question": "Yeh kab se ho raha hai?",
+        "answer": "3 mahino se"
+      },
+      {
+        "question": "Koi error message aa raha hai?",
+        "answer": "nahi"
+      },
+      {
+        "question": "Kaunsa device ya service hai?",
+        "answer": "nahi"
+      }
+    ],
+    "full_summary": "The merchant's account has been inactive for the past three months, with no error messages or specific devices/services reported. They are seeking assistance on how to reactivate their account.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "5d7e740d-7e6e-4d1e-9141-0681ce889bd5",
+    "session_id": "test-session",
+    "timestamp": "2026-03-16T12:37:42.653624+00:00",
+    "original_query": "id inactive hogayi kya karu",
+    "clarifications": [
+      {
+        "question": "Aapki ID inactive hone ka koi specific reason hai jo aapko pata hai?",
+        "answer": "nahi pata"
+      },
+      {
+        "question": "Aapne apni ID ko inactive hone se pehle kisi aur service ka use kiya tha?",
+        "answer": "AEPS"
+      },
+      {
+        "question": "Aapki ID inactive hone se pehle aapne koi specific transaction kiya tha?",
+        "answer": "nahi"
+      }
+    ],
+    "full_summary": "The merchant's account has become inactive, and they are unsure of the reason behind it. They mentioned using the AEPS service prior to the account becoming inactive but did not perform any specific transactions or receive any error messages. Further investigation is needed to determine the cause of the inactivity.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "cb5764a7-bda9-4578-be66-5ca767438a28",
+    "session_id": "test-session",
+    "timestamp": "2026-03-16T12:39:01.171512+00:00",
+    "original_query": "ID लंबे समय से Inactive है , अब क्या करें ?",
+    "clarifications": [
+      {
+        "question": "ID inactive hone ki wajah se kya aapko koi error message ya notification mila hai?",
+        "answer": "nahi mila"
+      },
+      {
+        "question": "Aapki ID ko inactive hone se pehle aapne koi transaction kiya tha?",
+        "answer": "nahi kiya"
+      },
+      {
+        "question": "Aapki ID ko inactive hone se pehle aapne kab last time use kiya tha?",
+        "answer": "3 mahine pahale"
+      }
+    ],
+    "full_summary": "The merchant's account ID has been inactive for an extended period, with the last usage occurring three months ago. They have not received any error messages or notifications regarding the inactivity and have not conducted any transactions prior to the account becoming inactive. Further assistance is needed to reactivate the account.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "df94c290-9912-4099-832c-192caadbb573",
+    "session_id": "test-session",
+    "timestamp": "2026-03-16T12:43:43.829137+00:00",
+    "original_query": "id inactive hai kya kare",
+    "clarifications": [
+      {
+        "question": "Aapko login karne par koi error message mil raha hai?",
+        "answer": "nahi mila"
+      },
+      {
+        "question": "Aapka account activate karne ke liye aapne koi documents submit kiye hain?",
+        "answer": "nahi kiya kya kya chahiye"
+      },
+      {
+        "question": "Aapko account activate karne ke liye kaunse documents chahiye yeh aapko pata hai?",
+        "answer": "nahi pata"
+      },
+      {
+        "question": "Aapne account activate karne ke liye kaunse documents ki requirement ke liye Swift Money ki website check ki hai?",
+        "answer": "nahi kiya"
+      }
+    ],
+    "full_summary": "The merchant's account is inactive, and they are unsure of the necessary steps to activate it. During the call, they confirmed that they did not receive any error messages upon login and have not submitted any required documents for activation. Additionally, they are unaware of the specific documentation needed and have not checked Swift Money's website for activation requirements.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "2a83c190-f760-4222-809e-5e4160bc82b4",
+    "session_id": "test-session",
+    "timestamp": "2026-03-16T13:01:39.834203+00:00",
+    "original_query": "id inactive hai kya kare",
+    "clarifications": [
+      {
+        "question": "Aapko login karne par koi error message mil raha hai?",
+        "answer": "nahi"
+      },
+      {
+        "question": "Aapka account activate karne ke liye aapne koi documents submit kiye hain?",
+        "answer": "nahi"
+      },
+      {
+        "question": "Aapne account activate karne ke liye koi specific date di hai?",
+        "answer": "abhi"
+      },
+      {
+        "question": "Aapne account activate karne ke liye koi specific documents submit karne ki sochi hai?",
+        "answer": "konsi documents chahiye"
+      }
+    ],
+    "full_summary": "The merchant's account is currently inactive, and they are unsure of the necessary steps to activate it. During the call, they confirmed that they are not receiving any error messages upon login and have not submitted any documents for activation. They are seeking clarification on which specific documents are required to proceed with the activation.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "045b5edf-1da8-4c04-8f7c-41dbe096fb38",
+    "session_id": "test-session",
+    "timestamp": "2026-03-16T13:05:46.783941+00:00",
+    "original_query": "id inactive hai kya kare",
+    "clarifications": [
+      {
+        "question": "Aapka account activate karne ke liye aapne kya steps follow kiye hain?",
+        "answer": "nahi pata"
+      },
+      {
+        "question": "Aapne account activate karne ke liye kis email ya phone number ka istemal kiya tha?",
+        "answer": "haan"
+      },
+      {
+        "question": "Aapne account activate karne ke liye kis website ya app ka istemal kiya tha?",
+        "answer": "website"
+      },
+      {
+        "question": "Aapne account activate karne ke liye kis email ya phone number ka istemal kiya tha?",
+        "answer": "email"
+      }
+    ],
+    "full_summary": "The merchant's account is inactive, and they are unsure of the steps needed to activate it. During the call, they confirmed that they attempted activation via a website using their email, but they could not recall the specific steps taken. Further assistance is required to guide them through the activation process.",
+    "status": "open",
+    "resolution": null
+  },
+  {
+    "id": "00d012a0-6ca8-434c-a075-e6f034948398",
+    "session_id": "test-session",
+    "timestamp": "2026-03-17T09:51:30.597365+00:00",
+    "original_query": "mere paise fas gaye hai",
+    "clarifications": [
+      {
+        "question": "Yeh kab se ho raha hai?",
+        "answer": "3 din se"
+      },
+      {
+        "question": "Kitna amount tha?",
+        "answer": "10000"
+      },
+      {
+        "question": "Kaunsa bank account tha?",
+        "answer": "IDBI"
+      },
+      {
+        "question": "Kaunsi service thi — AEPS, DMT ya BBPS?",
+        "answer": "AEPS"
+      }
+    ],
+    "full_summary": "Summary: The user is experiencing an issue where ₹10,000 has been stuck for the past three days in an AEPS transaction through their IDBI bank account. Further details have been gathered regarding the duration and amount involved in the transaction.",
+    "status": "open",
+    "resolution": null
+  }
+]

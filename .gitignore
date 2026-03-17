@@ -35,3 +35,7 @@ agent/hybrid_retriever.py
 campaign.db
 campaign/db.py
 analysis/intent_extractor.py
+speech/tts_sarvam_stream_test.py
+speech/stt_sarvam_stream_test.py
+bm25_store.py
+Sarvam_testing/
