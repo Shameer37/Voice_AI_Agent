@@ -176,25 +176,6 @@ python new_frejun_app.py
 
 ---
 
-## Testing RAG Without Telephony
-
-```bash
-python test_rag_engine.py
-```
-
-Interactive CLI to test queries directly against the RAG engine. Unknown issues are not written to disk in this mode.
-
-Example:
-```
-Q: AEPS transaction fail ho gayi kya kare
-A: AEPS transaction fail hone par Lader report check karein...
-
-Q: KYC ke liye kya kya chahiye
-A: Aadhaar card, PAN card, aapki dukaan par hona, aur device hona zaroori hai...
-```
-
----
-
 ## Triggering a Call (API)
 
 With both services running:
