@@ -197,14 +197,18 @@ def save_unknown_issue(
         "resolution":     None,
     }
 
-    # 1. Save to JSON
+    # 1. Save to JSON (skipped in test mode)
+    if os.getenv("RAG_TEST_MODE") == "1":
+        logger.info(f"[UnknownStore] TEST MODE — skipping JSON write for issue {record['id']}")
+        return record
+
     records = _load_json()
     records.append(record)
     _save_json(records)
     logger.info(f"[UnknownStore] Saved issue {record['id']} to {UNKNOWN_ISSUES_JSON}")
 
-    # 2. Embed into vectorstore so next call can find it
-    _embed_into_vectorstore(record)
+    # Auto-embedding disabled: case records should not pollute the KB vectorstore.
+    # Unknown issues are stored in JSON only for human review and email reporting.
 
     return record
 

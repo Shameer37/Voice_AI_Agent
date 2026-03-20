@@ -454,5 +454,32 @@
     "full_summary": "Summary: The user is experiencing an issue where ₹10,000 has been stuck for the past three days in an AEPS transaction through their IDBI bank account. Further details have been gathered regarding the duration and amount involved in the transaction.",
     "status": "open",
     "resolution": null
+  },
+  {
+    "id": "09069974-dfb1-4e4a-bbf3-655a5e59a2d4",
+    "session_id": "test-session",
+    "timestamp": "2026-03-17T11:12:22.911650+00:00",
+    "original_query": "transaction nahi hori",
+    "clarifications": [
+      {
+        "question": "Yeh kab se ho raha hai?",
+        "answer": "3 din se"
+      },
+      {
+        "question": "Kitna amount tha?",
+        "answer": "100"
+      },
+      {
+        "question": "Kaunsa bank account tha?",
+        "answer": "IDBI"
+      },
+      {
+        "question": "Kaunsi service thi — AEPS, DMT ya BBPS?",
+        "answer": "DMT"
+      }
+    ],
+    "full_summary": "Summary: The user is experiencing issues with a transaction that has not been processed for the past three days. The transaction amount was 100, and it was attempted through the DMT service using an IDBI bank account. Further investigation is needed to resolve the issue.",
+    "status": "open",
+    "resolution": null
   }
 ]
