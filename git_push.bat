@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 title Git Push Helper
 
 echo ==========================================
@@ -18,9 +19,9 @@ echo What files do you want to add?
 echo   [1] All files  (git add .)
 echo   [2] Specific files (pick from the list above)
 echo.
-set /p FILE_CHOICE="Enter 1 or 2: "
+set /p FILE_CHOICE=Enter 1 or 2:
 
-if "%FILE_CHOICE%"=="1" (
+if "!FILE_CHOICE!"=="1" (
     echo.
     echo Adding all files...
     git add .
@@ -29,15 +30,20 @@ if "%FILE_CHOICE%"=="1" (
         pause
         exit /b 1
     )
-) else if "%FILE_CHOICE%"=="2" (
+) else if "!FILE_CHOICE!"=="2" (
     echo.
     echo Enter filenames separated by spaces.
-    echo Example: agent\rag_engine.py config.py data\faqs.txt
+    echo Use backslash for paths. Example: agent\rag_engine.py config.py
     echo.
-    set /p FILES="Files: "
+    set /p FILES=Files:
     echo.
-    echo Adding: %FILES%
-    git add %FILES%
+    if "!FILES!"=="" (
+        echo ERROR: No files entered.
+        pause
+        exit /b 1
+    )
+    echo Adding: !FILES!
+    git add !FILES!
     if errorlevel 1 (
         echo ERROR: git add failed. Check the filenames and try again.
         pause
@@ -61,9 +67,9 @@ echo ------------------------------------------
 echo.
 
 :: Ask for commit message
-set /p COMMIT_MSG="Enter commit message: "
+set /p COMMIT_MSG=Enter commit message:
 
-if "%COMMIT_MSG%"=="" (
+if "!COMMIT_MSG!"=="" (
     echo ERROR: Commit message cannot be empty.
     pause
     exit /b 1
@@ -71,7 +77,7 @@ if "%COMMIT_MSG%"=="" (
 
 echo.
 echo Committing...
-git commit -m "%COMMIT_MSG%"
+git commit -m "!COMMIT_MSG!"
 if errorlevel 1 (
     echo ERROR: git commit failed.
     pause
