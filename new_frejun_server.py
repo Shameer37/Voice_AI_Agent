@@ -29,7 +29,7 @@
 #     from_number: str
 #     to_number: str
 #     data: Optional[dict] = None
-#     direction: Optional[str] = None
+#     direction_v2: Optional[str] = None
 
 
 # class CallRequest(BaseModel):
@@ -205,7 +205,7 @@
 # #         direction = payload.direction
 
 # #     # 🚨 HARD BLOCK INBOUND CALLS
-# #     if direction == "incoming":
+# #       if direction in {"incoming", "inbound"}:
 # #         logger.warning(
 # #             f"[SECURITY] Inbound call blocked | from={payload.from_number}"
 # #         )
@@ -358,11 +358,40 @@ class CallFlowRequest(BaseModel):
     to_number: str
     data: Optional[dict] = None
     direction: Optional[str] = None
+    direction_v2: Optional[str] = None
 
 
 class CallRequest(BaseModel):
     from_number: str
     to_number: str
+
+
+def normalize_direction(direction: Optional[str]) -> Optional[str]:
+    if not direction:
+        return None
+
+    return {
+        "incoming": "inbound",
+        "outgoing": "outbound",
+    }.get(direction.strip().lower(), direction.strip().lower())
+
+
+def extract_direction(*sources: Any) -> Optional[str]:
+    for source in sources:
+        if not source:
+            continue
+
+        if isinstance(source, dict):
+            direction = normalize_direction(
+                source.get("direction") or source.get("direction_v2")
+            )
+        else:
+            direction = normalize_direction(source)
+
+        if direction:
+            return direction
+
+    return None
 
 
 # -----------------------------------------------------------------------------
@@ -449,7 +478,12 @@ connector = StreamConnector(
 # -----------------------------------------------------------------------------
 @router.post("/calls/flow", status_code=200, include_in_schema=False)
 async def stream_flow(payload: CallFlowRequest):
-    logger.info(f"[FLOW] call_id={payload.call_id}")
+    direction = extract_direction(
+        payload.direction,
+        payload.direction_v2,
+        payload.data,
+    )
+    logger.info(f"[FLOW] call_id={payload.call_id} direction={direction}")
 
     return {
         "action": "stream",
@@ -510,19 +544,25 @@ async def webhook_receiver(payload: dict):
     event = payload.get("event")
     data = payload.get("data", {}) or {}
     call_id = data.get("call_id")
+    direction = extract_direction(data)
 
     if not call_id:
         return {"status": "ignored"}
 
     ctx = CALL_CONTEXT.setdefault(call_id, {})
     ctx["call_id"] = call_id
+    if direction:
+        ctx["direction"] = direction
 
     if event == "call.initiated":
-        ctx.update({
+        initiated_context = {
             "from_number": data.get("from"),
             "to_number": data.get("to"),
             "status": "initiated",
-        })
+        }
+        if direction:
+            initiated_context["direction"] = direction
+        ctx.update(initiated_context)
 
     elif event == "call.answered":
         ctx["status"] = "answered"
