@@ -339,6 +339,7 @@ from typing import Optional, Any
 
 from teler.streams import StreamConnector, StreamType, StreamOp
 from teler import AsyncClient
+from agent.utils.time_utils import parse_utc_iso, format_ist
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -347,6 +348,8 @@ router = APIRouter()
 # GLOBAL STATE (per call lifecycle)
 # -----------------------------------------------------------------------------
 CALL_CONTEXT: dict[str, dict] = {}
+from itertools import count
+_chunk_counter = count(1)
 
 # -----------------------------------------------------------------------------
 # Models
@@ -450,7 +453,8 @@ def remote_stream_handler():
             if msg.get("type") == "audio" and msg.get("audio_b64"):
                 return (json.dumps({
                     "type": "audio",
-                    "audio_b64": msg["audio_b64"]
+                    "audio_b64": msg["audio_b64"],
+                    "chunk_id": next(_chunk_counter),
                 }), StreamOp.RELAY)
 
             return ({}, StreamOp.PASS)
@@ -539,10 +543,19 @@ async def initiate_call(call_request: CallRequest):
 # -----------------------------------------------------------------------------
 @router.post("/webhooks/receiver", status_code=200, include_in_schema=False)
 async def webhook_receiver(payload: dict):
-    logger.info(f"[WEBHOOK] {payload}")
+    data = payload.get("data", {}) or {}
+    start_ist  = format_ist(parse_utc_iso(data.get("start_time")))
+    hangup_ist = format_ist(parse_utc_iso(data.get("hangup_time")))
+    log_payload = {**payload}
+    if start_ist or hangup_ist:
+        log_payload["data"] = {
+            **data,
+            **({"start_time": start_ist} if start_ist else {}),
+            **({"hangup_time": hangup_ist} if hangup_ist else {}),
+        }
+    logger.info(f"[WEBHOOK] {log_payload}")
 
     event = payload.get("event")
-    data = payload.get("data", {}) or {}
     call_id = data.get("call_id")
     direction = extract_direction(data)
 

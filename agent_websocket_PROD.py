@@ -188,7 +188,6 @@ async def agent_ws(ws: WebSocket):
     tts_active = False
     first_turn = True
     skip_next_utterance = True
-    greeting_end_ts = 0.0
     first_reply_filler_played = False
 
     consecutive_speech = 0
@@ -200,17 +199,7 @@ async def agent_ws(ws: WebSocket):
     TURN_COOLDOWN_SECONDS = 0.8
     call_active = True
 
-    # ---------------------------
-    # Greeting (BLOCKING INPUT)
-    # ---------------------------
-    logger.info("Playing greeting")
-    tts_active = True
-    frame = int(TTS_SR * 2 * 0.4)
-    for i in range(0, len(_CACHED_GREETING), frame):
-        await out_audio_q.put(_CACHED_GREETING[i:i + frame])
-        await asyncio.sleep(0.4)
-    tts_active = False
-    greeting_end_ts = time.time()
+    greeting_played = False
 
     # ---------------------------
     # async def process_turn():
@@ -391,12 +380,19 @@ async def agent_ws(ws: WebSocket):
             data = json.loads(msg)
             # Handle optional metadata message
             if data.get("type") == "meta":
-                # Previous behavior (kept for reference):
-                # (No metadata handling)
-
                 call_id = data.get("call_id") or call_id
                 to_number = data.get("to_number") or to_number
                 logger.info(f"[META] call_id={call_id} to_number={to_number}")
+
+                if not greeting_played:
+                    greeting_played = True
+                    logger.info("Playing greeting")
+                    tts_active = True
+                    frame = int(TTS_SR * 2 * 0.4)
+                    for i in range(0, len(_CACHED_GREETING), frame):
+                        await out_audio_q.put(_CACHED_GREETING[i:i + frame])
+                        await asyncio.sleep(0.4)
+                    tts_active = False
                 continue
             if "user_audio_chunk" not in data:
                 continue
